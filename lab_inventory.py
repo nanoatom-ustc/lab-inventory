@@ -7,61 +7,134 @@ import os
 # ---------- 页面配置 ----------
 st.set_page_config(
     page_title="8004 实验室耗材管理系统", 
-    layout="wide", 
-    page_icon="⚛️"
+    page_icon="🔬",
+    layout="wide"
 )
 
-# ---------- 自定义 UI 样式 (量子精密测量主题) ----------
-def inject_theme():
-    st.markdown("""
-        <style>
-        /* 全局深色背景，模拟暗室环境 */
-        .stApp {
-            background: radial-gradient(circle at top right, #0a192f, #00050a);
-            color: #e0e0e0;
-        }
-        
-        /* 标题与副标题：激光荧光感 */
-        h1, h2, h3 {
-            color: #00f2ff !important;
-            text-shadow: 0 0 12px rgba(0, 242, 255, 0.4);
-            font-family: 'Courier New', monospace;
-        }
-
-        /* 侧边栏：磨砂质感 */
-        [data-testid="stSidebar"] {
-            background-color: rgba(20, 30, 48, 0.9);
-            border-right: 1px solid #00f2ff33;
-        }
-
-        /* 按钮：金属/科技感 */
-        .stButton>button {
-            background-color: rgba(0, 242, 255, 0.1);
-            color: #00f2ff;
-            border: 1px solid #00f2ff;
-            border-radius: 4px;
-            transition: all 0.3s;
-        }
-        .stButton>button:hover {
-            background-color: #00f2ff;
-            color: #000;
-            box-shadow: 0 0 20px #00f2ff;
-        }
-
-        /* 数据编辑器与表格优化 */
-        .stDataFrame {
-            border: 1px solid #1e293b;
-        }
-
-        /* 提示框颜色微调 */
-        .stAlert {
-            background-color: rgba(0, 0, 0, 0.3);
-            border: 1px solid #30363d;
-        }
-        </style>
-    """, unsafe_allow_index=True)
-
-inject_theme()
+# ---------- 自定义CSS - 量子光学主题（仅视觉，不改文字）----------
+st.markdown("""
+<style>
+    /* 主背景 - 深邃星空蓝黑渐变 */
+    .stApp {
+        background: linear-gradient(135deg, #0a0f1e 0%, #0d1525 50%, #0a0f1e 100%);
+    }
+    
+    /* 主标题样式 - 冷光科技感 */
+    h1 {
+        color: #00d4ff !important;
+        text-shadow: 0 0 20px rgba(0,212,255,0.3);
+        font-weight: bold !important;
+        border-bottom: 2px solid rgba(0,212,255,0.3);
+        padding-bottom: 15px;
+    }
+    
+    /* 子标题 */
+    h2, h3 {
+        color: #7c3aed !important;
+        border-left: 4px solid #00d4ff;
+        padding-left: 15px;
+    }
+    
+    /* 卡片效果 - 玻璃态 */
+    .stDataFrame, .stExpander, .element-container {
+        background: rgba(15, 25, 45, 0.6);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        border: 1px solid rgba(0,212,255,0.2);
+    }
+    
+    /* 侧边栏 - 深邃风格 */
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #0a0f1e 0%, #0d1525 100%);
+        border-right: 1px solid rgba(0,212,255,0.2);
+    }
+    
+    /* 按钮 - 科技感 */
+    .stButton > button {
+        background: linear-gradient(90deg, #1e2a4a, #2d3a5a);
+        color: #00d4ff;
+        border: 1px solid #00d4ff;
+        border-radius: 25px;
+        transition: all 0.3s ease;
+    }
+    
+    .stButton > button:hover {
+        background: linear-gradient(90deg, #00d4ff, #7c3aed);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 20px rgba(0,212,255,0.4);
+    }
+    
+    /* 预警框 */
+    .stAlert {
+        background: linear-gradient(90deg, rgba(255,50,50,0.2), rgba(255,0,0,0.1));
+        border-left: 4px solid #ff3366;
+    }
+    
+    /* 信息框 */
+    .stInfo {
+        background: linear-gradient(90deg, rgba(0,212,255,0.1), rgba(124,58,237,0.1));
+        border-left: 4px solid #00d4ff;
+    }
+    
+    /* 指标卡片数值 */
+    [data-testid="stMetricValue"] {
+        color: #00d4ff !important;
+        font-size: 2rem !important;
+        font-weight: bold;
+    }
+    
+    /* 指标卡片标签 */
+    [data-testid="stMetricLabel"] {
+        color: #a855f7 !important;
+    }
+    
+    /* 选择框 */
+    .stSelectbox > div > div {
+        background: rgba(20, 30, 50, 0.8);
+        border: 1px solid #00d4ff;
+        border-radius: 10px;
+    }
+    
+    /* 分割线 - 激光效果 */
+    hr {
+        background: linear-gradient(90deg, transparent, #00d4ff, #7c3aed, #00d4ff, transparent);
+        height: 2px;
+        border: none;
+    }
+    
+    /* 数据表格文字颜色 */
+    .dataframe {
+        background: rgba(10, 15, 30, 0.5) !important;
+        color: #e0e0e0 !important;
+    }
+    
+    /* 表格表头 */
+    .dataframe th {
+        background: rgba(0, 212, 255, 0.2) !important;
+        color: #00d4ff !important;
+    }
+    
+    /* 输入框 */
+    .stTextInput > div > div > input, .stTextArea > div > div > textarea {
+        background: rgba(20, 30, 50, 0.8);
+        border: 1px solid #00d4ff;
+        color: white;
+    }
+    
+    /* 数字输入框 */
+    .stNumberInput > div > div > input {
+        background: rgba(20, 30, 50, 0.8);
+        border: 1px solid #00d4ff;
+        color: white;
+    }
+    
+    /* radio按钮 */
+    .stRadio > div {
+        color: #e0e0e0;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 # ---------- 数据文件路径 ----------
 DATA_DIR = "data"
@@ -76,6 +149,7 @@ def load_inventory():
     if os.path.exists(INVENTORY_FILE):
         return pd.read_csv(INVENTORY_FILE)
     else:
+        # 基于上传文件计算的初始库存数据
         initial_data = {
             "产品名称": [
                 "lbtek PRADFCD-11-B-APC", "lbtek MT-AM05S3", "OMPH12D-20M", "OMPH12D-40M",
@@ -102,6 +176,20 @@ if "inventory" not in st.session_state:
 if "records" not in st.session_state:
     st.session_state.records = load_records()
 
+# ---------- 顶部指标卡片 ----------
+col1, col2, col3, col4 = st.columns(4)
+with col1:
+    st.metric("📦 耗材种类", len(st.session_state.inventory))
+with col2:
+    st.metric("📊 总库存量", st.session_state.inventory["当前数目"].sum())
+with col3:
+    low_count = len(st.session_state.inventory[st.session_state.inventory["当前数目"] < 3])
+    st.metric("⚠️ 低库存预警", low_count)
+with col4:
+    st.metric("📝 今日操作", len(st.session_state.records[st.session_state.records["日期"] == date.today().strftime("%Y-%m-%d")]))
+
+st.markdown("---")
+
 # ---------- 核心功能函数 ----------
 def update_inventory(product_name, operation, quantity, user, note):
     idx = st.session_state.inventory[st.session_state.inventory["产品名称"] == product_name].index
@@ -115,13 +203,15 @@ def update_inventory(product_name, operation, quantity, user, note):
         new_qty = current_qty + quantity
     elif operation == "使用":
         if quantity > current_qty:
-            st.warning(f"库存不足！当前仅剩 {current_qty}")
+            st.warning(f"库存不足！当前仅剩 {current_qty} 个")
             return False
         new_qty = current_qty - quantity
     
+    # 更新库存
     st.session_state.inventory.loc[idx[0], "当前数目"] = new_qty
     st.session_state.inventory.to_csv(INVENTORY_FILE, index=False)
     
+    # 增加记录
     new_record = pd.DataFrame([{
         "记录ID": str(uuid.uuid4())[:8],
         "产品名称": product_name,
@@ -147,75 +237,68 @@ def add_new_product(name, category, qty):
 
 # ---------- 侧边栏交互 ----------
 with st.sidebar:
-    st.markdown("### ⚛️ 实验员操作台")
-    st.header("⚡ 快速记录")
+    st.header("📝 快速记录")
     selected_product = st.selectbox("选择零件", st.session_state.inventory["产品名称"])
-    op = st.radio("操作类型", ["使用", "购买", "回收"], horizontal=True)
+    op = st.radio("操作", ["使用", "购买", "回收"], horizontal=True)
     num = st.number_input("数量", min_value=1, value=1)
-    user = st.text_input("填表人 (User ID)")
-    note = st.text_area("备注 (Experimental Note)")
+    user = st.text_input("填表人")
+    note = st.text_area("备注")
     
-    if st.button("🛰️ 提交数据更新", use_container_width=True):
+    if st.button("提交记录", use_container_width=True):
         if user and update_inventory(selected_product, op, num, user, note):
-            st.success("系统参数已更新")
+            st.success("记录已更新")
             st.rerun()
         elif not user:
             st.error("请输入填表人")
 
     st.divider()
-    st.header("🔭 新增准直/机械件")
+    st.header("✨ 新增产品")
     new_name = st.text_input("零件名称")
     new_cat = st.text_input("分类", value="机械件")
     new_qty = st.number_input("初始库存", min_value=0, value=0)
-    if st.button("➕ 录入系统"):
+    if st.button("添加至库存系统"):
         if new_name and add_new_product(new_name, new_cat, new_qty):
-            st.success(f"已录入: {new_name}")
+            st.success(f"已添加 {new_name}")
             st.rerun()
 
 # ---------- 主界面展示 ----------
-# 顶部装饰栏
-st.markdown("""
-    <div style="background-color: rgba(0, 242, 255, 0.1); padding: 10px; border-radius: 5px; border-left: 5px solid #00f2ff; margin-bottom: 20px;">
-        <small>📡 系统状态: <b>相干锁定 (Coherent Locked)</b> | 💡 环境光压: <b>正常</b> | ❄️ 原子俘获: <b>运行中</b></small>
-    </div>
-""", unsafe_allow_index=True)
+st.title("🔬 8004 实验室耗材管理")
 
-st.title("🧪 8004 实验室耗材管理")
+# 移动端引导提示
+st.info("📱 **手机用户**：请点击左上角的 **☰** 菜单按钮，打开「快速记录」表单！")
 
-# 移动端引导
-st.info("📱 **Mobile Tip**：点击左上角 **>>** 按钮进入快速操作面板。")
-
-# 低库存报警 (红色呼吸感)
+# 低库存报警
 low_stock = st.session_state.inventory[st.session_state.inventory["当前数目"] < 3]
 if not low_stock.empty:
     for _, row in low_stock.iterrows():
-        st.error(f"🚨 **库存能级过低预警**：{row['产品名称']} 仅剩 **{row['当前数目']}** 个！", icon="⚠️")
+        st.error(f"🚨 缺货预警：{row['产品名称']} 仅剩 {row['当前数目']} 个！")
 
-# 数据看板区
-tab1, tab2 = st.tabs(["📊 实时库存状态", "📜 实验流水日志"])
+st.subheader("📊 当前库存")
+st.subheader("🛠️ 库存后台管理")
+with st.expander("点击展开管理面板（仅限修正错误或更改零件名称）"):
+    st.info("""
+    💡 **功能说明**：
+    1. **修正名称**：若发现零件型号录入有误，可直接在此修改产品名称或分类。
+    2. **库存校准**：若物理库存与系统数值不符，可手动修改“当前数目”进行强制对齐。
+    3. **行操作**：选中行后按 `Delete` 键可删除该产品。
+    
+    ⚠️ **注意**：日常的领用或采购请优先使用侧边栏的“快速记录”，以便保留操作流水。
+    """)
+    
+    edited_df = st.data_editor(
+        st.session_state.inventory,
+        num_rows="dynamic",
+        use_container_width=True,
+        key="inventory_editor"
+    )
+    
+    if st.button("💾 确认并覆盖原始数据", use_container_width=True):
+        st.session_state.inventory = edited_df
+        st.session_state.inventory.to_csv(INVENTORY_FILE, index=False)
+        st.success("基础数据库已成功更新！")
+        st.rerun()
+        
+st.dataframe(st.session_state.inventory, use_container_width=True)
 
-with tab1:
-    st.subheader("🛠️ 库存后台管理")
-    with st.expander("⚙️ 系统校准面板 (仅用于修正原始数据)"):
-        st.info("💡 日常领用请使用左侧操作台。手动修改此处将强制对齐物理库存。")
-        edited_df = st.data_editor(
-            st.session_state.inventory,
-            num_rows="dynamic",
-            use_container_width=True,
-            key="inventory_editor"
-        )
-        if st.button("💾 确认并写入数据库", use_container_width=True):
-            st.session_state.inventory = edited_df
-            st.session_state.inventory.to_csv(INVENTORY_FILE, index=False)
-            st.success("原始数据库已重置。")
-            st.rerun()
-            
-    st.dataframe(st.session_state.inventory, use_container_width=True)
-
-with tab2:
-    st.subheader("📑 历史记录记录")
-    st.dataframe(st.session_state.records.sort_index(ascending=False), use_container_width=True)
-
-# 底部页脚
-st.markdown("---")
-st.markdown("<center><small>8004 Laboratory | Quantum Precision Measurement Group</small></center>", unsafe_allow_index=True)
+st.subheader("📜 历史流水")
+st.dataframe(st.session_state.records.sort_index(ascending=False), use_container_width=True)
