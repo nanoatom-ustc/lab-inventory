@@ -5,154 +5,130 @@ import uuid
 import os
 
 # ---------- 页面配置 ----------
-st.set_page_config(page_title="实验室耗材管理系统", layout="wide")
+st.set_page_config(page_title="8004 实验室耗材管理系统", layout="wide")
 
-# ---------- 数据文件路径（云端持久化）----------
+# ---------- 数据文件路径 ----------
 DATA_DIR = "data"
 INVENTORY_FILE = os.path.join(DATA_DIR, "inventory.csv")
 RECORDS_FILE = os.path.join(DATA_DIR, "records.csv")
 
-# 创建数据目录
 if not os.path.exists(DATA_DIR):
     os.makedirs(DATA_DIR)
 
-# ---------- 加载/初始化库存数据 ----------
+# ---------- 数据初始化逻辑 ----------
 def load_inventory():
     if os.path.exists(INVENTORY_FILE):
         return pd.read_csv(INVENTORY_FILE)
     else:
-        # 初始数据
-        return pd.DataFrame({
-            "产品ID": ["FC001", "FC002", "ADJ001", "SLV001"],
-            "产品名称": ["lbtek PRADFCD-11-B-APC", "lbtek PRADFCD-12-B-APC", 
-                         "精密调整架", "M3套筒"],
-            "规格": ["APC接口", "APC接口", "5轴", "不锈钢"],
-            "分类": ["光纤准直器", "光纤准直器", "调整架", "套筒"],
-            "当前数目": [8, 2, 12, 3]
-        })
+        # 基于上传文件计算的初始库存数据
+        initial_data = {
+            "产品名称": [
+                "lbtek PRADFCD-11-B-APC", "lbtek MT-AM05S3", "OMPH12D-20M", "OMPH12D-40M",
+                "Y形压板", "圆形底座", "z轴", "笼板 SM05", "笼板 SM1", "笼板 25.4通孔",
+                "笼式玻片架", "笼式45度反射镜架", "笼式90度反射镜架", "BD架", "PBS架 M05",
+                "PBS 10M", "反射镜架（新）", "可变光阑"
+            ],
+            "当前数目": [8, 11, 21, 45, 27, 5, 12, 2, 30, 1, 2, 8, 6, 20, 5, 20, 39, 8],
+            "分类": ["光纤准直器", "准直器调整架", "套筒", "套筒", "压板", "底座", "位移台", "笼板", "笼板", "笼板", "架子", "架子", "架子", "架子", "架子", "架子", "架子", "光阑"]
+        }
+        df = pd.DataFrame(initial_data)
+        df.to_csv(INVENTORY_FILE, index=False)
+        return df
 
 def load_records():
     if os.path.exists(RECORDS_FILE):
         return pd.read_csv(RECORDS_FILE)
     else:
-        return pd.DataFrame(columns=[
-            "记录ID", "耗材名称", "规格", "操作类型", "数量", 
-            "填表人", "日期", "备注", "变更后库存"
-        ])
+        return pd.DataFrame(columns=["记录ID", "产品名称", "操作类型", "数量", "填表人", "日期", "备注", "变更后库存"])
 
-def save_inventory(df):
-    df.to_csv(INVENTORY_FILE, index=False)
-
-def save_records(df):
-    df.to_csv(RECORDS_FILE, index=False)
-
-# 初始化 session_state
+# 初始化 Session State
 if "inventory" not in st.session_state:
     st.session_state.inventory = load_inventory()
 if "records" not in st.session_state:
     st.session_state.records = load_records()
 
-# ---------- 辅助函数 ----------
-def update_inventory(product_name, spec, operation, quantity):
-    idx = st.session_state.inventory[
-        (st.session_state.inventory["产品名称"] == product_name) & 
-        (st.session_state.inventory["规格"] == spec)
-    ].index
-    
+# ---------- 核心功能函数 ----------
+def update_inventory(product_name, operation, quantity, user, note):
+    idx = st.session_state.inventory[st.session_state.inventory["产品名称"] == product_name].index
     if len(idx) == 0:
         st.error("未找到该耗材")
         return False
     
     current_qty = st.session_state.inventory.loc[idx[0], "当前数目"]
     
-    if operation == "购买":
+    if operation == "购买" or operation == "回收":
         new_qty = current_qty + quantity
     elif operation == "使用":
         if quantity > current_qty:
-            st.warning(f"库存不足！当前只有 {current_qty} 个")
+            st.warning(f"库存不足！当前仅剩 {current_qty} [cite: 1, 2]")
             return False
         new_qty = current_qty - quantity
-    elif operation == "回收":
-        new_qty = current_qty + quantity
-    else:
-        return False
     
+    # 更新库存
     st.session_state.inventory.loc[idx[0], "当前数目"] = new_qty
-    save_inventory(st.session_state.inventory)  # 保存到文件
+    st.session_state.inventory.to_csv(INVENTORY_FILE, index=False)
     
+    # 增加记录
     new_record = pd.DataFrame([{
         "记录ID": str(uuid.uuid4())[:8],
-        "耗材名称": product_name,
-        "规格": spec,
+        "产品名称": product_name,
         "操作类型": operation,
         "数量": quantity,
-        "填表人": st.session_state.get("username", "匿名"),
+        "填表人": user,
         "日期": date.today().strftime("%Y-%m-%d"),
-        "备注": st.session_state.get("remark", ""),
+        "备注": note,
         "变更后库存": new_qty
     }])
     st.session_state.records = pd.concat([st.session_state.records, new_record], ignore_index=True)
-    save_records(st.session_state.records)  # 保存到文件
+    st.session_state.records.to_csv(RECORDS_FILE, index=False)
     return True
 
-# ---------- 侧边栏：快速输入 ----------
+def add_new_product(name, category, qty):
+    if name in st.session_state.inventory["产品名称"].values:
+        st.error("该产品已存在！")
+        return False
+    new_item = pd.DataFrame([{"产品名称": name, "当前数目": qty, "分类": category}])
+    st.session_state.inventory = pd.concat([st.session_state.inventory, new_item], ignore_index=True)
+    st.session_state.inventory.to_csv(INVENTORY_FILE, index=False)
+    return True
+
+# ---------- 侧边栏交互 ----------
 with st.sidebar:
     st.header("📝 快速记录")
+    selected_product = st.selectbox("选择零件", st.session_state.inventory["产品名称"])
+    op = st.radio("操作", ["使用", "购买", "回收"], horizontal=True)
+    num = st.number_input("数量", min_value=1, value=1)
+    user = st.text_input("填表人")
+    note = st.text_area("备注")
     
-    product_options = st.session_state.inventory["产品名称"] + " (" + st.session_state.inventory["规格"] + ")"
-    selected = st.selectbox("耗材", product_options, key="product_select")
-    selected_name = selected.split(" (")[0]
-    selected_spec = selected.split(" (")[1].rstrip(")")
-    
-    operation = st.radio("操作类型", ["➕ 购买", "➖ 使用", "♻️ 回收"], horizontal=True)
-    operation_type = operation.split()[1]
-    
-    quantity = st.number_input("数量", min_value=1, value=1, step=1)
-    username = st.text_input("填表人", value="", placeholder="例如：张三")
-    remark = st.text_area("备注（选填）", placeholder="如：实验消耗、供应商等")
-    
-    if st.button("✅ 确认提交", use_container_width=True):
-        if not username:
-            st.error("请填写填表人")
-        else:
-            st.session_state["username"] = username
-            st.session_state["remark"] = remark
-            if update_inventory(selected_name, selected_spec, operation_type, quantity):
-                st.success("记录成功！")
-                st.rerun()
+    if st.button("提交记录", use_container_width=True):
+        if user and update_inventory(selected_product, op, num, user, note):
+            st.success("记录已更新")
+            st.rerun()
+        elif not user:
+            st.error("请输入填表人")
 
-# ---------- 主界面 ----------
-st.title("🧪 实验室耗材管理")
+    st.divider()
+    st.header("✨ 新增产品")
+    new_name = st.text_input("零件名称")
+    new_cat = st.text_input("分类", value="机械件")
+    new_qty = st.number_input("初始库存", min_value=0, value=0)
+    if st.button("添加至库存系统"):
+        if new_name and add_new_product(new_name, new_cat, new_qty):
+            st.success(f"已添加 {new_name}")
+            st.rerun()
 
-low_stock = st.session_state.inventory[st.session_state.inventory["当前数目"] < 5]
+# ---------- 主界面展示 ----------
+st.title("🧪 8004 实验室耗材管理")
+
+# 低库存报警
+low_stock = st.session_state.inventory[st.session_state.inventory["当前数目"] < 3]
 if not low_stock.empty:
-    st.error("⚠️ **待采购提醒** 以下耗材库存低于5个，请及时采购！")
     for _, row in low_stock.iterrows():
-        st.warning(f"• {row['产品名称']}（{row['规格']}）：仅剩 {row['当前数目']} 个")
+        st.error(f"🚨 缺货预警：{row['产品名称']} 仅剩 {row['当前数目']} 个！")
 
-def highlight_low_stock(row):
-    if row["当前数目"] < 5:
-        return ["background-color: #ffcccc"] * len(row)
-    return [""] * len(row)
+st.subheader("📊 当前库存")
+st.dataframe(st.session_state.inventory, use_container_width=True)
 
-st.subheader("📊 当前库存概览")
-styled_df = st.session_state.inventory.style.apply(highlight_low_stock, axis=1)
-st.dataframe(styled_df, use_container_width=True, height=300)
-
-st.subheader("📜 历史操作记录")
-col1, col2 = st.columns(2)
-with col1:
-    filter_person = st.text_input("按填表人筛选", placeholder="输入姓名")
-with col2:
-    filter_date = st.date_input("按日期筛选", value=None)
-
-filtered_records = st.session_state.records.copy()
-if filter_person:
-    filtered_records = filtered_records[filtered_records["填表人"].str.contains(filter_person, na=False)]
-if filter_date:
-    filtered_records = filtered_records[filtered_records["日期"] == filter_date.strftime("%Y-%m-%d")]
-
-st.dataframe(filtered_records, use_container_width=True)
-
-csv = filtered_records.to_csv(index=False).encode('utf-8-sig')
-st.download_button("📥 导出筛选结果为CSV", csv, "lab_records.csv", "text/csv")
+st.subheader("📜 历史流水")
+st.dataframe(st.session_state.records.sort_index(ascending=False), use_container_width=True)
