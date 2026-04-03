@@ -122,7 +122,7 @@ with st.sidebar:
 st.title("🧪 8004 实验室耗材管理")
 
 # 移动端引导提示（让用户知道侧边栏在哪）
-st.info("📱 **手机用户**：请点击左上角的 **☰** 菜单按钮，打开「快速记录」表单！")
+st.info("📱 **手机用户**：请点击左上角的 **>>** 菜单按钮，打开「快速记录」表单！")
 
 # 低库存报警
 low_stock = st.session_state.inventory[st.session_state.inventory["当前数目"] < 3]
