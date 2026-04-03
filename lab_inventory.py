@@ -128,6 +128,22 @@ if not low_stock.empty:
         st.error(f"🚨 缺货预警：{row['产品名称']} 仅剩 {row['当前数目']} 个！")
 
 st.subheader("📊 当前库存")
+st.subheader("🛠️ 库存信息管理（编辑名称/分类/数目）")
+with st.expander("点击展开管理面板"):
+    # 使用 data_editor 直接编辑 DataFrame
+    edited_df = st.data_editor(
+        st.session_state.inventory,
+        num_rows="dynamic", # 允许删除行
+        use_container_width=True,
+        key="inventory_editor"
+    )
+    
+    if st.button("💾 保存所有修改", help="点击后将覆盖原始库存数据"):
+        st.session_state.inventory = edited_df
+        st.session_state.inventory.to_csv(INVENTORY_FILE, index=False)
+        st.success("库存基础信息已更新！")
+        st.rerun()
+        
 st.dataframe(st.session_state.inventory, use_container_width=True)
 
 st.subheader("📜 历史流水")
