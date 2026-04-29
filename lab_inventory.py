@@ -9,7 +9,7 @@ st.set_page_config(page_title="8004 实验室耗材管理系统", layout="wide")
 
 # ---------- Google 表格连接配置 ----------
 # ⚠️ 务必将下方的网址替换为你真实的 8004_Lab_System 表格网址
-SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1itHa5TE2WnZcCVneuEwaFcHr8c4AzpD2L-WmrJ3dGZQ/edit?gid=0#gid=0"
+SPREADSHEET_URL = "https://docs.google.com/spreadsheets/d/1itHa5TE2WnZcCVneuEwaFcHr8c4AzpD2L-WmrJ3dGZQ/edit"
 
 # 建立与 Google Sheets 的连接
 conn = st.connection("gsheets", type=GSheetsConnection)
